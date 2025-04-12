@@ -3,8 +3,6 @@ import logging
 from logging.handlers import RotatingFileHandler
 from flask import Flask, render_template, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
-import redis
-from redis.exceptions import ConnectionError as RedisConnectionError
 import time
 from sqlalchemy import create_engine
 
@@ -38,10 +36,6 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
 )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# Redis connection configuration (optional)
-redis_url = os.environ.get('REDIS_URL', None)
-if redis_url:
-    app.config['REDIS_URL'] = redis_url
 
 # Configure SQLAlchemy connection pool
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
