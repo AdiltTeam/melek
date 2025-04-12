@@ -2,13 +2,13 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 from flask import Flask, render_template, send_from_directory
+from flask_sqlalchemy import SQLAlchemy
 import redis
 from redis.exceptions import ConnectionError as RedisConnectionError
-from extensions import init_extensions, db, sse
 import time
 from sqlalchemy import create_engine
 
-# Create the app
+# Flask app creation
 app = Flask(__name__)
 
 # Configure logging
@@ -23,7 +23,7 @@ app.logger.addHandler(file_handler)
 app.logger.setLevel(logging.INFO)
 app.logger.info('Customer Bonus startup')
 
-# Configure the app
+# App configuration
 app.config['SECRET_KEY'] = os.environ.get("FLASK_SECRET_KEY", "a secret key")
 app.config['STATIC_FOLDER'] = 'static'
 
@@ -31,11 +31,14 @@ app.config['STATIC_FOLDER'] = 'static'
 app.config['DEBUG'] = False
 app.config['ENV'] = 'production'
 
-# PostgreSQL connection
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URL', 'postgresql://adil_database_user:ADSnWcp5ngzXNC7kt5ZuC0YPu3gubAz8@dpg-cvor58k9c44c73br2uag-a.oregon-postgres.render.com/adil_database')
+# PostgreSQL connection configuration
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    'DATABASE_URL', 
+    'postgresql://adil_33bd_user:wCFx6qHuFSRmkQULnnQzIU8oEIbOeSLQ@dpg-cvt3lo15pdvs739f3pm0-a.oregon-postgres.render.com/adil_33bd'
+)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# Redis connection configuration (optional, only if Redis is used)
+# Redis connection configuration (optional)
 redis_url = os.environ.get('REDIS_URL', None)
 if redis_url:
     app.config['REDIS_URL'] = redis_url
@@ -49,7 +52,10 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "max_overflow": 5
 }
 
-# Configure Redis for real-time notifications (optional)
+# Initialize SQLAlchemy
+db = SQLAlchemy(app)
+
+# Redis connection settings (optional)
 REDIS_RETRY_ATTEMPTS = 3
 REDIS_RETRY_DELAY = 2  # seconds
 REDIS_CONFIG = {
@@ -96,14 +102,6 @@ if redis_url:
     else:
         app.logger.warning("Redis connection failed, falling back to database-only notifications")
 
-# Initialize extensions
-try:
-    init_extensions(app)
-    app.logger.info("Extensions initialized successfully")
-except Exception as e:
-    app.logger.error(f"Failed to initialize extensions: {str(e)}")
-    raise
-
 # Import routes after app is created
 import routes  # noqa: F401
 import admin  # noqa: F401
@@ -129,3 +127,7 @@ def serve_static(filename):
         filename,
         cache_timeout=cache_timeout
     )
+
+# Main entry point for the app
+if __name__ == '__main__':
+    app.run()
