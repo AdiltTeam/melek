@@ -36,7 +36,6 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
 )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-
 # Configure SQLAlchemy connection pool
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_pre_ping": True,
@@ -61,6 +60,9 @@ REDIS_CONFIG = {
     'decode_responses': True
 }
 
+# Only attempt Redis connection if Redis URL is provided
+redis_url = os.environ.get("REDIS_URL")
+
 def connect_redis_with_retry():
     """Attempt to connect to Redis with retry logic"""
     app.logger.info("Attempting to connect to Redis")
@@ -83,7 +85,7 @@ def connect_redis_with_retry():
             app.logger.error(f"Unexpected Redis error: {str(e)}")
             return None
 
-# Try to initialize Redis connection (optional)
+# Try to initialize Redis connection if the URL exists (optional)
 if redis_url:
     redis_client = connect_redis_with_retry()
     if redis_client:
@@ -95,6 +97,8 @@ if redis_url:
         }
     else:
         app.logger.warning("Redis connection failed, falling back to database-only notifications")
+else:
+    app.logger.info("No Redis URL found, Redis functionality will be skipped")
 
 # Import routes after app is created
 import routes  # noqa: F401
